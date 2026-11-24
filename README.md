@@ -14,13 +14,33 @@ Each download extracts to one `.kext` bundle. [Release notes][release]
 
 ## What works and known limits
 
-| Status | Details |
-| --- | --- |
-| **Verified on hardware** | Wi-Fi, Bluetooth advertising, AirDrop and Continuity on RTL8852BE (`10ec:b852`) with Bluetooth `13d3:3571`. This test used airportRTL v0.1.1, Tahoe 26.7.1, OpenCore 1.0.8 and an iPhone 8 Plus. |
-| **AirPods** | Full functionality reported on the tested setup. |
-| **Known issue** | iPhone Personal Hotspot fails on the tested setup. |
-| **Pending hardware validation** | v0.1.2 on the expanded Wi-Fi match list, repeat boots, and sleep/wake. Apple Watch unlock, Sidecar, Continuity Camera and iPhone Mirroring are also untested. |
-| **Unsupported** | USB Wi-Fi adapters, Apple silicon, and macOS builds outside the specified kernel target. Bluetooth controllers need their own supported USB ID and firmware profile. |
+The hardware baseline is RTL8852BE (`10ec:b852`) with USB Bluetooth
+`13d3:3571`. Initial tests used airportRTL v0.1.1, Tahoe 26.7.1,
+OpenCore 1.0.8 and an iPhone 8 Plus. The table includes follow-up reports.
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| Wi-Fi | **Works** | Joined a network on the hardware baseline. |
+| Bluetooth LE advertising | **Works** | Firmware handoff and advertising verified. |
+| AirPods | **Works** | Full functionality reported. |
+| AirDrop | **Works** | File transfer confirmed with an iPhone 8 Plus. |
+| Continuity | **Works** | General Continuity use reported. |
+| Handoff | **Works** | Confirmed in follow-up testing. |
+| iPhone Personal Hotspot | **Fails** | Reported on the tested setup. |
+| iPhone Mirroring | **Fails** | Reported on the tested setup. |
+| Universal Clipboard | **Unconfirmed** | Worked on AirBridgeRTL. A separate airportRTL result is pending. |
+| Instant Hotspot | **Untested** | Automatic hotspot discovery has no separate result. |
+| Continuity Camera | **Untested** | iPhone webcam mode. |
+| AirPlay to Mac | **Untested** | Streaming to this Mac. |
+| Apple Watch Auto Unlock | **Untested** | |
+| Sidecar | **Untested** | |
+| Universal Control | **Untested** | |
+| Wi-Fi and Bluetooth after sleep | **Untested** | Reconnection after wake. |
+
+The expanded v0.1.2 PCIe matches and repeat-boot reliability still need
+hardware testing. The current build targets x86_64 and PCIe Wi-Fi.
+Continuity features also have their own device and OS requirements.
+[Apple Continuity requirements](https://support.apple.com/en-gb/108046)
 
 ## Compatibility
 
