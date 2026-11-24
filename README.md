@@ -1,9 +1,21 @@
-# airportRTL
+<h1 align="center">airportRTL</h1>
 
-**PCIe Wi-Fi and USB Bluetooth for Realtek rtw89 cards on macOS Tahoe.**
+<p align="center"><strong>Realtek Wi-Fi and Bluetooth for macOS Tahoe</strong></p>
 
-airportRTL targets **x86_64 macOS Tahoe 26.7.1** (`25G241`, Darwin `25.6.0`)
-with OpenCore and the external legacy networking stack.
+<p align="center">
+  <a href="https://github.com/HungLe17/airportRTL/releases/tag/v0.1.2"><strong>Download v0.1.2</strong></a>
+  &nbsp;·&nbsp;
+  <a href="#compatibility">Compatibility</a>
+  &nbsp;·&nbsp;
+  <a href="#install-with-opencore">OpenCore setup</a>
+</p>
+
+---
+
+airportRTL provides OpenCore kernel extensions for Realtek rtw89 PCIe
+Wi-Fi and USB Bluetooth on x86_64 Hackintosh systems. The driver matches
+RTL8851, RTL8852 and RTL8922 PCIe devices. It uses Apple Wireless Direct
+Link (AWDL) and Bluetooth LE discovery for AirDrop and Continuity.
 
 | v0.1.2 download | What it provides |
 | --- | --- |
@@ -43,6 +55,16 @@ Continuity features also have their own device and OS requirements.
 [Apple Continuity requirements](https://support.apple.com/en-gb/108046)
 
 ## Compatibility
+
+### Does airportRTL support macOS Sequoia or earlier?
+
+The current release, **v0.1.2**, targets **x86_64 macOS Tahoe 26.7.1**
+(build `25G241`, Darwin `25.6.0`). The OpenCore setup pins both airportRTL
+kexts to Darwin `25.6.0`, and the Bluetooth firmware loader requires Darwin
+25. **macOS Sequoia 15, Sonoma 14, Ventura 13 and older releases are
+unsupported.**
+
+### Realtek Wi-Fi and USB Bluetooth devices
 
 Version 0.1.2 matches all 12 PCIe device IDs in the bundled rtw89 driver.
 All Wi-Fi IDs use vendor `10ec`.

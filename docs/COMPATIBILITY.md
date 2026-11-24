@@ -5,7 +5,9 @@ Darwin `25.6.0`) with the external Skywalk and Legacy IO80211
 dependencies in the [installation guide](INSTALL.md). AirLink checks
 the executable identity of Legacy IO80211. Confirm the macOS build and
 dependency versions before carrying the installation to a different update.
-Other macOS builds and Apple silicon are outside the verified configuration.
+The v0.1.2 OpenCore setup pins both airportRTL kexts to Darwin `25.6.0`.
+macOS Sequoia 15, Sonoma 14, Ventura 13, earlier versions and Apple silicon
+are outside the release target.
 
 ## Wi-Fi PCI devices
 
