@@ -1,6 +1,5 @@
 AIRPORT_BT := airportRTLBluetooth
 AIRPORT_BT_ID := io.github.HungLe17.airportRTLBluetooth
-AIRPORT_BT_VERSION := 0.1.1
 AIRPORT_BT_SRC := bluetooth
 AIRPORT_BT_CONTENTS := $(BUILD_DIR)/out/$(AIRPORT_BT).kext/Contents
 AIRPORT_BT_OBJECTS := $(BT_OBJS) $(BUILD_DIR)/bluetooth/module.o
@@ -21,14 +20,14 @@ $(AIRPORT_BT_TEST): tests/advertising.cpp $(AIRPORT_BT_SRC)/AdvertisingSets.hpp 
 	@mkdir -p $(dir $@)
 	$(CXX) -std=c++17 -Wall -Wextra -Werror -O1 -g -fsanitize=address,undefined -fno-sanitize-recover=all $< -o $@
 
-$(BUILD_DIR)/bluetooth/module.o: module.c $(AIRPORT_BT_SRC)/rules.mk
+$(BUILD_DIR)/bluetooth/module.o: module.c $(AIRPORT_BT_SRC)/rules.mk Makefile
 	@mkdir -p $(dir $@)
-	$(CC) $(FW_CFLAGS) -DMODULE_ID=$(AIRPORT_BT_ID) -DMODULE_VERSION='"$(AIRPORT_BT_VERSION)"' \
+	$(CC) $(FW_CFLAGS) -DMODULE_ID=$(AIRPORT_BT_ID) -DMODULE_VERSION='"$(AIRPORTRTL_VERSION)"' \
 		-DMODULE_START=BroadTek_kern_start -DMODULE_STOP=BroadTek_kern_stop -c $< -o $@
 
-$(AIRPORT_BT_CONTENTS)/Info.plist: $(BT_SRC)/Info.plist $(ADVERTISING_SOURCE)/src/plugin/Info.plist $(AIRPORT_BT_SRC)/bundle_info.py $(AIRPORT_BT_SRC)/rules.mk
+$(AIRPORT_BT_CONTENTS)/Info.plist: $(BT_SRC)/Info.plist $(ADVERTISING_SOURCE)/src/plugin/Info.plist $(AIRPORT_BT_SRC)/bundle_info.py $(AIRPORT_BT_SRC)/rules.mk Makefile
 	@mkdir -p $(dir $@)
-	python3 $(AIRPORT_BT_SRC)/bundle_info.py "$(word 1,$^)" "$(word 2,$^)" "$@" $(AIRPORT_BT) $(AIRPORT_BT_ID) $(AIRPORT_BT_VERSION)
+	python3 $(AIRPORT_BT_SRC)/bundle_info.py "$(word 1,$^)" "$(word 2,$^)" "$@" $(AIRPORT_BT) $(AIRPORT_BT_ID) $(AIRPORTRTL_VERSION)
 
 airportRTL-bluetooth-advertising:
 	@test -f "$(LILU_KEXT)/Contents/MacOS/Lilu" || { echo "Set LILU_KEXT to the target Lilu.kext"; exit 1; }

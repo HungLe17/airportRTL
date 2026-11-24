@@ -1,6 +1,6 @@
 # Manual OpenCore installation
 
-This guide covers airportRTL 0.1.1 on x86_64 macOS Tahoe 26.7.1, build
+This guide covers airportRTL on x86_64 macOS Tahoe 26.7.1, build
 `25G241` and Darwin `25.6.0`. The hardware test used OpenCore 1.0.8.
 Check the Wi-Fi PCI ID and Bluetooth USB ID independently before installing.
 [Compatibility](COMPATIBILITY.md) · [OpenCore 1.0.8](https://github.com/acidanthera/OpenCorePkg/releases/tag/1.0.8)
@@ -11,9 +11,10 @@ Back up your complete working EFI. Make a test copy on a spare boot drive
 and confirm OpenCore can boot from it. Edit that copy first so you can
 return to the original EFI from the firmware boot menu.
 
-Extract `airportRTL-integrated.zip`. If you are building from source,
-first follow the [build guide](BUILD.md). Copy these two project bundles
-to `EFI/OC/Kexts`.
+Download and extract the two `.kext.tar.gz` assets for the same version
+from [Releases](https://github.com/HungLe17/airportRTL/releases). If you
+are building from source, follow the [build guide](BUILD.md). Copy the
+extracted bundles to `EFI/OC/Kexts`.
 
 - `airportRTLWiFi.kext`
 - `airportRTLBluetooth.kext`
@@ -119,7 +120,7 @@ bundle IDs and to distinguish discovery from a completed transfer.
 ## Update or roll back
 
 For an update, replace both airportRTL bundles together in the test EFI
-using one release archive. Recheck the macOS build and dependency versions
+using the two assets from the same release. Recheck the macOS build and dependency versions
 in the release's compatibility notes and validate the plist. After testing,
 copy the verified configuration to your normal boot drive.
 

@@ -32,7 +32,6 @@ $(AIRPORT_BRIDGE_OBJ)/plugin_start.o: $(BRIDGE_DIR)/vendor/Lilu/Library/plugin_s
 	$(CXX) $(BRIDGE_COMMON) $(BRIDGE_CXX) -MMD -MP -c "$<" -o "$@"
 
 .PHONY: airportRTL-wifi-with-airlink
-WIFI_AIRLINK_VERSION := 0.1.1
 WIFI_AIRLINK_DESCRIPTOR := $(BUILD_DIR)/airport_airlink_module.o
 WIFI_AIRLINK_BINARY := $(BUILD_DIR)/airportRTLWiFi.airlink
 WIFI_AIRLINK_IOKIT := $(BUILD_DIR)/airlink-sdk
@@ -70,9 +69,9 @@ $(AIRPORT_BRIDGE_OBJ)/PluginIntegrated.cpp: $(BRIDGE_DIR)/src/Plugin.cpp $(AIRPO
 $(AIRPORT_BRIDGE_OBJ)/PluginIntegrated.o: $(AIRPORT_BRIDGE_OBJ)/PluginIntegrated.cpp $(AIRPORT_BRIDGE_OBJ)/OwlyTargets.hpp $(AIRPORT_SRC)/wifi/rules.mk
 	$(CXX) $(BRIDGE_COMMON) $(BRIDGE_CXX) -MMD -MP -c "$<" -o "$@"
 
-$(WIFI_AIRLINK_DESCRIPTOR): $(AIRPORT_SRC)/module.c $(AIRPORT_SRC)/wifi/rules.mk
+$(WIFI_AIRLINK_DESCRIPTOR): $(AIRPORT_SRC)/module.c $(AIRPORT_SRC)/wifi/rules.mk $(AIRPORT_SRC)/Makefile
 	@mkdir -p $(dir $@)
-	$(CC) $(FW_CFLAGS) -DMODULE_ID=$(WIFI_ID) -DMODULE_VERSION='"$(WIFI_AIRLINK_VERSION)"' \
+	$(CC) $(FW_CFLAGS) -DMODULE_ID=$(WIFI_ID) -DMODULE_VERSION='"$(AIRPORTRTL_VERSION)"' \
 	    -DMODULE_START=OwlyAirLinkBridge_kern_start -DMODULE_STOP=OwlyAirLinkBridge_kern_stop -c "$<" -o "$@"
 
 $(WIFI_AIRLINK_BINARY): $(WIFI_AIRLINK_CORE) $(WIFI_AIRLINK_DESCRIPTOR) $(AIRPORT_BRIDGE_COMMON) $(AIRPORT_BRIDGE_OBJ)/PluginIntegrated.o
@@ -81,7 +80,7 @@ $(WIFI_AIRLINK_BINARY): $(WIFI_AIRLINK_CORE) $(WIFI_AIRLINK_DESCRIPTOR) $(AIRPOR
 
 airportRTL-wifi-with-airlink: $(WIFI_AIRLINK_BINARY)
 	python3 tools/bind_bridge.py --check "$(AIRPORT_FAMILY_UUID)" "$(WIFI_AIRLINK_BINARY)"
-	python3 "$(AIRPORT_SRC)/wifi/check_layout.py" src "$(WIFI_AIRLINK_BINARY)" "$(AIRPORT_FAMILY)" $(WIFI_ID) $(WIFI_AIRLINK_VERSION) \
+	python3 "$(AIRPORT_SRC)/wifi/check_layout.py" src "$(WIFI_AIRLINK_BINARY)" "$(AIRPORT_FAMILY)" $(WIFI_ID) $(AIRPORTRTL_VERSION) \
 	    --bridge "$(BRIDGE_DIR)/Info.plist" --lilu "$(LILU_KEXT)" --output "$(BUILD_DIR)/../integrated"
 
 -include $(AIRPORT_BRIDGE_COMMON:.o=.d) $(AIRPORT_BRIDGE_OBJ)/PluginIntegrated.d $(WIFI_AIRLINK_NETWORK_OBJECTS:.o=.d)

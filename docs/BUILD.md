@@ -1,8 +1,8 @@
 # Building and validating airportRTL
 
-The release build produces `airportRTL-integrated.zip`, containing the
-two signed project kexts. Use the [installation guide](INSTALL.md) to
-boot the resulting bundles with the external dependencies.
+The release build produces one versioned `.tar.gz` per signed project
+kext. Use the [installation guide](INSTALL.md) to boot the extracted
+bundles with the external dependencies.
 
 ## Source layout
 
@@ -35,10 +35,10 @@ make package \
   LILU_KEXT=/path/to/Lilu.kext
 ```
 
-The default output is `build/airportRTL/airportRTL-integrated.zip`
-under the repository root. The build validates firmware inputs, links
-one executable per kext, checks kernel imports and verifies the ad-hoc
-signatures after extracting the archive.
+The default output directory is `build/airportRTL/`. Each asset is named
+`<bundle>-<version>.kext.tar.gz` and extracts to the original `.kext`
+bundle name. The build validates firmware inputs, checks kernel imports
+and verifies the ad-hoc signatures after extracting each archive.
 
 ## Validate a build
 

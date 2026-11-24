@@ -1,14 +1,16 @@
-"""Package and verify the two manually installed development bundles."""
+"""Package and verify the two versioned kext release assets."""
 import argparse
 from pathlib import Path
 import plistlib
 import subprocess
+import tarfile
 import tempfile
-import zipfile
 
 
-def verify(bundle):
+def verify(bundle, version):
     info = plistlib.loads((bundle / "Contents/Info.plist").read_bytes())
+    if info["CFBundleVersion"] != version or info["CFBundleShortVersionString"] != version:
+        raise ValueError(f"Unexpected version in {bundle}. Expected {version}")
     executable = bundle / "Contents/MacOS" / info["CFBundleExecutable"]
     if (executable.name != bundle.stem or list(executable.parent.iterdir()) != [executable]
             or any(bundle.rglob("*.kext"))):
@@ -39,30 +41,31 @@ def verify(bundle):
     subprocess.run(["codesign", "--verify", "--deep", "--strict", bundle], check=True)
 
 
-def main(root):
-    archive = root / "airportRTL-integrated.zip"
-    wifi = root / "integrated/airportRTLWiFi.kext"
-    bluetooth = root / "out/airportRTLBluetooth.kext"
-    bundles = (wifi, bluetooth)
+def main(root, version):
+    bundles = (root / "integrated/airportRTLWiFi.kext", root / "out/airportRTLBluetooth.kext")
     with tempfile.TemporaryDirectory(dir=root) as stage:
-        packed = Path(stage) / archive.name
-        with zipfile.ZipFile(packed, "w", compression=zipfile.ZIP_DEFLATED) as output:
-            for bundle in bundles:
-                verify(bundle)
-                for path in sorted(bundle.rglob("*")):
-                    if path.is_file():
-                        output.write(path, path.relative_to(bundle.parent))
-        extracted = Path(stage) / "extracted"
-        subprocess.run(["ditto", "-x", "-k", packed, extracted], check=True)
-        if {path.name for path in extracted.iterdir()} != {bundle.name for bundle in bundles}:
-            raise ValueError("Unexpected archive entries")
+        archives = []
         for bundle in bundles:
-            verify(extracted / bundle.name)
-        packed.replace(archive)
-    print(archive.resolve())
+            verify(bundle, version)
+            packed = Path(stage) / f"{bundle.stem}-{version}.kext.tar.gz"
+            with tarfile.open(packed, "w:gz") as output:
+                output.add(bundle, arcname=bundle.name)
+            extracted = Path(stage) / bundle.stem
+            extracted.mkdir()
+            subprocess.run(["tar", "-xzf", packed, "-C", extracted], check=True)
+            if {path.name for path in extracted.iterdir()} != {bundle.name}:
+                raise ValueError(f"Unexpected archive layout in {packed}")
+            verify(extracted / bundle.name, version)
+            archives.append(packed)
+        for packed in archives:
+            destination = root / packed.name
+            packed.replace(destination)
+            print(destination.resolve())
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("root", type=Path)
-    main(parser.parse_args().root)
+    parser.add_argument("version")
+    args = parser.parse_args()
+    main(args.root, args.version)

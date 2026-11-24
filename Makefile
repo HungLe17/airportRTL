@@ -1,6 +1,7 @@
 .DEFAULT_GOAL := package
 .DELETE_ON_ERROR:
 
+AIRPORTRTL_VERSION := 0.1.2
 BUILD_DIR ?= build/airportRTL
 WIFI_BUILD_DIR := $(abspath $(BUILD_DIR))/wifi-link
 MKSDK := ./third_party/MacKernelSDK
@@ -58,7 +59,7 @@ include bluetooth/rules.mk
 .PHONY: package wifi bluetooth test check-wifi-firmware
 
 package: wifi bluetooth
-	python3 package.py "$(abspath $(BUILD_DIR))"
+	python3 package.py "$(abspath $(BUILD_DIR))" "$(AIRPORTRTL_VERSION)"
 
 bluetooth: airportRTL-bluetooth
 
@@ -73,6 +74,7 @@ wifi: check-wifi-firmware
 	@test -f "$(LILU_KEXT)/Contents/MacOS/Lilu" || { echo "Set LILU_KEXT to the target Lilu.kext"; exit 1; }
 	$(MAKE) -C "$(REFERENCE_WIFI)" -f Makefile -f "$(CURDIR)/wifi/rules.mk" \
 	    AIRPORT_SRC="$(CURDIR)" AIRPORT_FAMILY="$(abspath $(FAMILY_KEXT))" \
+	    AIRPORTRTL_VERSION="$(AIRPORTRTL_VERSION)" \
 	    BUILD_DIR="$(WIFI_BUILD_DIR)" COMPAT_DIR="$(abspath $(COMPAT_DIR))" \
 	    LINUX_INC="$(abspath third_party/linux-include)" FIRMWARE_DIR="$(abspath $(FIRMWARE_DIR))" \
 	    FAMILY_BIN="$(abspath $(FAMILY_KEXT))/Contents/MacOS/IO80211FamilyLegacy" \

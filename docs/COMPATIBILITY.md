@@ -9,7 +9,7 @@ Other macOS builds and Apple silicon are outside the verified configuration.
 
 ## Wi-Fi PCI devices
 
-All IDs in this table use PCI vendor `10ec`. Current source builds include
+All IDs in this table use PCI vendor `10ec`. Version 0.1.2 includes
 all 12 IDs in both Wi-Fi match personalities. The match list comes from
 the PCIe backends in the bundled rtw89 driver. Successful Wi-Fi association
 and over-the-air AWDL require separate hardware tests.
