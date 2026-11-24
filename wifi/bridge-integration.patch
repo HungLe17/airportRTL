@@ -1,0 +1,28 @@
+--- Plugin.cpp
++++ Plugin.cpp
+@@ -39,9 +39,6 @@
+ constexpr uint8_t kFamilyUUID[16] = {
+     0x4c,0x07,0x53,0x8b,0x62,0xeb,0x3d,0x6d,
+     0xae,0xf9,0x93,0xbc,0xdc,0xf4,0x5f,0xab
+-};
+-constexpr uint8_t kFrontendUUID[16] = {
+-    0xc7,0x95,0x57,0xb8,0x3f,0x1c,0x39,0x98,0x91,0xbf,0x33,0xb3,0xf1,0xf4,0x8d,0x37
+ };
+ constexpr uint8_t kOpenPrefix[16] = {
+     0x55,0x48,0x89,0xe5,0x41,0x57,0x41,0x56,
+@@ -829,9 +826,13 @@
+         /* Stage 1/2 callbacks record arrival only: do not dereference a target
+          * header or ask the patcher to resolve or alter any target code. */
+         if (!owlyStartupPlan.eventRouteAllowed()) return;
+-        const bool verified = loadedUUIDMatches(address, size, kFrontendUUID);
++        // The adapter and frontend are linked into the same image. Accept
++        // only a loaded range that contains this module's callback.
++        const auto callback = reinterpret_cast<mach_vm_address_t>(&loaded);
++        const bool verified = address && size >= sizeof(mach_header_64) &&
++            callback >= address && callback - address < size;
+         readiness.frontend(verified);
+-        IOLog("OwlyEB1: frontend UUID %s\n", verified ? "matched" : "mismatch; inactive");
++        IOLog("OwlyEB1: integrated frontend image %s\n", verified ? "matched" : "mismatch; inactive");
+         updateReady();
+         return;
+     }

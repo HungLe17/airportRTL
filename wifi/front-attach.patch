@@ -1,0 +1,394 @@
+--- AirPortRTW89Native.cpp
++++ AirPortRTW89Native.cpp
+@@ -26,6 +26,12 @@
+ #if defined(OWLY_AWDL_SOFTWARE_SYNC) && OWLY_AWDL_SOFTWARE_SYNC
+ #include "OwlyAwdlEntitlement.hpp"
+ #include <kern/task.h>
++#endif
++
++#include "rtw88_thread_call.h"
++
++#if defined(AIRPORT_RTL_TAHOE_FRONT)
++#include "FrontAttachment.hpp"
+ #endif
+ 
+ #define LOG(fmt, ...) IOLog("AirPort_RTW89: " fmt "\n", ##__VA_ARGS__)
+@@ -74,6 +80,40 @@
+     /* OWLY_NATIVE_IDENTITY_BRIDGE_END */
+ };
+ 
++namespace {
++// Radio workers borrow the callback table only while front teardown is
++// waiting for admitted calls. Never hold the admission lock across a callback.
++class FrontCallback {
++public:
++    FrontCallback(IOLock *lock, struct owly_abi6_rx_gate &gate) : lock(lock), gate(gate)
++    {
++        if (!lock)
++            return;
++        IOLockLock(lock);
++        admitted = owly_abi6_gate_enter(&gate);
++        IOLockUnlock(lock);
++    }
++
++    ~FrontCallback()
++    {
++        if (!admitted)
++            return;
++        IOLockLock(lock);
++        owly_abi6_gate_leave(&gate);
++        IOLockUnlock(lock);
++    }
++
++    explicit operator bool() const { return admitted; }
++    FrontCallback(const FrontCallback &) = delete;
++    FrontCallback &operator=(const FrontCallback &) = delete;
++
++private:
++    IOLock *lock;
++    struct owly_abi6_rx_gate &gate;
++    bool admitted = false;
++};
++}
++
+ /* The first bytes of a buffer, for the log. */
+ 
+ /* True the first time @number is seen. The bitmap covers every request number
+@@ -423,19 +463,35 @@
+ {
+     AirPort_RTW89 *me = static_cast<AirPort_RTW89 *>(self);
+ 
+-    OSIncrementAtomic(&me->_nativeRunning);
+-    if (!me->_nativeClosing)
++    IOLockLock(me->_owlyRxGateLock);
++    if (me->_nativeRunning) {
++        IOLockUnlock(me->_owlyRxGateLock);
++        return;
++    }
++    me->_nativeRunning = 1;
++    while (!me->_nativeClosing && me->_nativeEvents) {
++        IOLockUnlock(me->_owlyRxGateLock);
+         me->nativeEvents();
+-    OSDecrementAtomic(&me->_nativeRunning);
++        IOLockLock(me->_owlyRxGateLock);
++    }
++    me->_nativeRunning = 0;
++    IOLockUnlock(me->_owlyRxGateLock);
+ }
+ 
+ /* Any context. */
+ void AirPort_RTW89::nativeNotify(UInt32 events)
+ {
+-    if (!_native || _nativeClosing || !_nativeCall)
++    // Radio workers may report events during the front's synchronous attach.
++    // Save their bits until every function in the front callback table is valid.
++    if (!_owlyRxGateLock)
+         return;
+-    OSBitOrAtomic(events, &_nativeEvents);
+-    thread_call_enter(_nativeCall);
++    IOLockLock(_owlyRxGateLock);
++    if (!_nativeClosing) {
++        OSBitOrAtomic(events, &_nativeEvents);
++        if (_nativeCall)
++            rtw88_thread_call_enter(_nativeCall);
++    }
++    IOLockUnlock(_owlyRxGateLock);
+ }
+ 
+ void AirPort_RTW89::nativeEvents()
+@@ -466,7 +522,8 @@
+ /* interface->postMessage(), once the front has handed over its functions */
+ void AirPort_RTW89::nativePost(unsigned int msg, void *data, size_t len)
+ {
+-    if (_ns && _ns->front.post_message)
++    const FrontCallback callback(_owlyRxGateLock, _owlyRxGate);
++    if (callback && _ns->front.post_message)
+         _ns->front.post_message(_ns->front.ctx, msg, data, len);
+ }
+ 
+@@ -499,33 +556,38 @@
+  * ours; the kext must not publish its own interface. */
+ bool AirPort_RTW89::connectFront()
+ {
++    struct rtw89_back_ops back = {};
++    IOService *front = nullptr;
++#if !defined(AIRPORT_RTL_TAHOE_FRONT)
+     OSDictionary *matching = serviceMatching(RTW89_FRONT_CLASS);
+     const OSSymbol *name = OSSymbol::withCString(RTW89_FRONT_CONNECT);
+-    struct rtw89_back_ops back = {};
+-    IOService *front = nullptr;
+-    IOReturn ret;
+-
+-    if (matching) {
+-        /* Loaded by hand, the front is already running if it is there at all.
+-         * Both injected at boot, it may start after this driver: it waits for
+-         * the injected Wi-Fi family. Wait for it then, but only if OpenCore
+-         * put its personality in the catalogue, so the Ethernet-style mode
+-         * does not hold up the boot. */
+-        uint64_t wait = frontExpected() ? 30ULL * 1000 * 1000 * 1000 : 100ULL * 1000 * 1000;
+-
++
++    IOService *provider = getProvider();
++    OSDictionary *parent = provider ? registryEntryIDMatching(provider->getRegistryEntryID()) : nullptr;
++    if (matching && parent && matching->setObject(gIOParentMatchKey, parent)) {
++        const uint64_t wait = frontExpected() ? 30000000000ULL : 100000000ULL;
+         front = waitForMatchingService(matching, wait);
+-        matching->release();
+-        if (!front && wait > 100ULL * 1000 * 1000)
+-            LOG("the front is installed but did not start within 30 s");
+-    }
++    }
++    OSSafeReleaseNULL(parent);
++    OSSafeReleaseNULL(matching);
+     if (!front || !name) {
+         OSSafeReleaseNULL(name);
+         OSSafeReleaseNULL(front);
+         return false;
+     }
+ 
++#endif
+     _ns = new NativeState;
+-    _nativeCall = thread_call_allocate(nativeEventsCall, this);
++    thread_call_t call = _ns ? rtw88_thread_call_allocate(nativeEventsCall, this) : nullptr;
++    if (!call) {
++        delete _ns;
++        _ns = nullptr;
++#if !defined(AIRPORT_RTL_TAHOE_FRONT)
++        name->release();
++        front->release();
++#endif
++        return false;
++    }
+     back.version = RTW89_FRONT_API_VERSION;
+     back.ctx = this;
+     back.get_mac = backGetMac;
+@@ -544,14 +606,20 @@
+ #endif
+ 
+     _native = true;         /* the callbacks below may come during the call */
+-    ret = front->callPlatformFunction(name, true, &back, &_ns->front, nullptr, nullptr);
++#if defined(AIRPORT_RTL_TAHOE_FRONT)
++    front = airportRTLAttachTahoeFront(this, &back, &_ns->front);
++    const IOReturn ret = front ? kIOReturnSuccess : kIOReturnNotReady;
++#else
++    const IOReturn ret = front->callPlatformFunction(name, true, &back, &_ns->front, nullptr, nullptr);
+     name->release();
++#endif
+     if (ret != kIOReturnSuccess) {
+         LOG("the front refused the connection: 0x%x", ret);
+         _native = false;
++        rtw88_thread_call_free(call);
+         delete _ns;
+         _ns = nullptr;
+-        front->release();
++        OSSafeReleaseNULL(front);
+         return false;
+     }
+     _front = front;
+@@ -560,6 +628,9 @@
+     IOLockLock(_owlyRxGateLock);
+     _nativeClosing = false;
+     const bool rxGateOpened = owly_abi6_gate_open(&_owlyRxGate);
++    _nativeCall = call;
++    if (rxGateOpened && _nativeEvents)
++        rtw88_thread_call_enter(call);
+     IOLockUnlock(_owlyRxGateLock);
+     if (!rxGateOpened) {
+         LOG("ABI6 RX gate refused open; disconnecting incomplete frontend");
+@@ -570,7 +641,7 @@
+     _dataReady = true;
+     /* macOS decides when to join and when to join again */
+     rtw89_glue_set_rejoin(false);
+-    LOG("connected to %s: native Wi-Fi", RTW89_FRONT_CLASS);
++    LOG("connected to %s: native Wi-Fi", front->getMetaClass()->getClassName());
+     return true;
+ }
+ 
+@@ -581,21 +652,9 @@
+                                 const uint8_t src[6], const uint8_t dst[6],
+                                 uint8_t channel,int8_t rssi,uint64_t received_us)
+ {
+-    /* Lock-protected callback admission. _ns may be deleted only AFTER
+-     * disconnectFront has CLOSED the gate and drained admitted callbacks.
+-     * Never call the frontend while holding this lock: Apple can reenter us.
+-     * RX runs on the rtw89 receive thread, not interrupt top half. */
+-    bool (*handoff)(void *, const struct owly_abi6_packet *) = nullptr;
+-    void *ctx = nullptr;
+-    if (!_owlyRxGateLock) return false;
+-    IOLockLock(_owlyRxGateLock);
+-    if (!_halting && !_asleep && _native && _ns &&
+-        _ns->front.owly_rx_handoff && owly_abi6_gate_enter(&_owlyRxGate)) {
+-        handoff = _ns->front.owly_rx_handoff;
+-        ctx = _ns->front.ctx;
+-    }
+-    IOLockUnlock(_owlyRxGateLock);
+-    if (!handoff) return false;
++    const FrontCallback callback(_owlyRxGateLock, _owlyRxGate);
++    if (!callback || _halting || _asleep || !_ns->front.owly_rx_handoff)
++        return false;
+ 
+     bool ok = false;
+     /* Gate B never compiled this branch. In Gate C2, avoid putting a
+@@ -610,15 +669,12 @@
+ #else
+                 (void)channel;(void)rssi;(void)received_us;
+ #endif
+-                ok = handoff(ctx, packet);
++                ok = _ns->front.owly_rx_handoff(_ns->front.ctx, packet);
+             }
+             IOFree(packet, sizeof(struct owly_abi6_packet));
+         }
+     }
+ 
+-    IOLockLock(_owlyRxGateLock);
+-    (void)owly_abi6_gate_leave(&_owlyRxGate);
+-    IOLockUnlock(_owlyRxGateLock);
+     return ok;
+ }
+ #if defined(OWLY_NATIVE_PEER_DATA) && OWLY_NATIVE_PEER_DATA
+@@ -634,11 +690,29 @@
+     size_t n=mbuf_pkthdr_len(m);int rc=-ENETDOWN;
+     if(self && self->_native && self->_ns && !self->_nativeClosing &&
+        !self->_halting && !self->_asleep && self->_ns->airlink.enabled && n>=14 && n<=2062) {
+-        Scratch copied(n);
+-        if(copied.p && !mbuf_copydata(m,0,n,copied.p))rc=rtw89_glue_native_output(copied.bytes(),n);
+-    }
+-    mbuf_freem(m); /* all statuses consume once; bounded queue copies before returning */
++#if defined(AIRPORT_RTL_TAHOE_FRONT)
++        // The integrated front copies into a single mbuf. The radio queue
++        // serializes its own frame before returning, so borrow these bytes
++        // for the duration of this call.
++        if (!mbuf_next(m) && mbuf_len(m) == n) {
++            const auto *bytes = static_cast<const uint8_t *>(mbuf_data(m));
++            if (bytes)
++                rc = rtw89_glue_native_output(bytes, n);
++        } else
++#endif
++        {
++            Scratch copied(n);
++            if (copied.p && !mbuf_copydata(m, 0, n, copied.p))
++                rc = rtw89_glue_native_output(copied.bytes(), n);
++        }
++    }
+     if(self)self->setProperty("OwlyNativeTXEnqueueResult",static_cast<unsigned long long>(static_cast<uint32_t>(rc)),32);
++#if defined(AIRPORT_RTL_TAHOE_FRONT)
++    // Only a full radio queue is retryable. It has not copied this packet.
++    if (rc == -ENOBUFS)
++        return kIOReturnOutputStall;
++#endif
++    mbuf_freem(m);
+     return rc ? kIOReturnOutputDropped : kIOReturnOutputSuccess;
+ }
+ int AirPort_RTW89::backNativeWindow(void *ctx,struct owly_link_window *out)
+@@ -680,8 +754,6 @@
+ 
+ void AirPort_RTW89::disconnectFront()
+ {
+-    const OSSymbol *name;
+-
+ #if defined(OWLY_ABI6_FRONT_BRIDGE) && OWLY_ABI6_FRONT_BRIDGE
+     /* Close admission under same lock as enter(), BEFORE _ns can be freed.
+      * Do NOT hold gate during wait: active callback must be able to leave. */
+@@ -707,28 +779,30 @@
+     _nativeClosing = true;
+ #endif
+     if (!_front) return;
++    // Closing and producer submission use the same lock. After closing,
++    // synchronous cancellation also drains dequeued callbacks before freeing _ns.
++    if (_nativeCall) {
++        rtw88_thread_call_free(_nativeCall);
++        _nativeCall = nullptr;
++    }
+     if (_ns && _ns->front.set_apple_rsn)
+         _ns->front.set_apple_rsn(_ns->front.ctx, false);
+-    if (_nativeCall) {
+-        /* nothing new is queued now; let one that is running finish */
+-        thread_call_cancel(_nativeCall);
+-        IOSleep(10);
+-        while (_nativeRunning)
+-            IOSleep(1);
+-        thread_call_free(_nativeCall);
+-        _nativeCall = nullptr;
+-    }
+     if (_ns->linkUp) {
+         _ns->linkUp = false;
+         _ns->front.set_link(_ns->front.ctx, false, 0, 0);
+     }
+-    nativePost(APPLE80211_M_POWER_CHANGED);
+-    name = OSSymbol::withCString(RTW89_FRONT_DISCONNECT);
++    if (_ns->front.post_message)
++        _ns->front.post_message(_ns->front.ctx, APPLE80211_M_POWER_CHANGED, nullptr, 0);
++#if defined(AIRPORT_RTL_TAHOE_FRONT)
++    airportRTLDetachTahoeFront(_front);
++#else
++    const OSSymbol *name = OSSymbol::withCString(RTW89_FRONT_DISCONNECT);
+     if (name) {
+         /* returns when no call from the front is in progress any more */
+         _front->callPlatformFunction(name, true, nullptr, nullptr, nullptr, nullptr);
+         name->release();
+     }
++#endif
+     _native = false;
+     _front->release();
+     _front = nullptr;
+@@ -742,6 +816,9 @@
+ 
+ void AirPort_RTW89::nativeRxFrame(const uint8_t *frame, size_t len)
+ {
++    const FrontCallback callback(_owlyRxGateLock, _owlyRxGate);
++    if (!callback)
++        return;
+     mbuf_t m = _ns->front.alloc_packet(_ns->front.ctx, (unsigned int)len);
+ 
+     if (!m)
+@@ -755,7 +832,9 @@
+ 
+ void AirPort_RTW89::nativeTxWake()
+ {
+-    _ns->front.tx_wake(_ns->front.ctx);
++    const FrontCallback callback(_owlyRxGateLock, _owlyRxGate);
++    if (callback)
++        _ns->front.tx_wake(_ns->front.ctx);
+ }
+ 
+ /* The link state changed (publishLink() has the new one). */
+@@ -847,8 +926,23 @@
+                                   const uint8_t request_mac[6])
+ {
+     AirPort_RTW89 *me = static_cast<AirPort_RTW89 *>(ctx);
+-    if (!me || !me->_ns || !vif || role != RTW89_FRONT_ROLE_AIRLINK_OBSERVED ||
+-        me->_nativeClosing || me->_halting || me->_asleep)
++    if (!me || !me->_ns || !vif || role != RTW89_FRONT_ROLE_AIRLINK_OBSERVED)
++        return false;
++#if defined(AIRPORT_RTL_TAHOE_FRONT)
++    // Sleep holds this lock through radio-down. When asleep, allow an
++    // existing interface to discard its logical state and restore address.
++    // The same cookie checks apply while the hardware is powered down.
++    const struct CommandLock {
++        IOLock *lock;
++        explicit CommandLock(IOLock *value) : lock(value) { IOLockLock(lock); }
++        ~CommandLock() { IOLockUnlock(lock); }
++    } commandLock(me->_commandLock);
++    const bool sleeping = me->_asleep;
++#else
++    const bool sleeping = false;
++#endif
++    const bool releasing = event == RTW89_FRONT_VIF_DISABLED || event == RTW89_FRONT_VIF_DESTROYED;
++    if (me->_nativeClosing || me->_halting || (me->_asleep && !(sleeping && releasing)))
+         return false;
+     NativeState *ns = me->_ns;
+ #if defined(OWLY_AWDL_SERVICE_LIFECYCLE) && OWLY_AWDL_SERVICE_LIFECYCLE
+@@ -881,9 +975,11 @@
+ #if defined(OWLY_AWDL_SOFTWARE_SYNC) && OWLY_AWDL_SOFTWARE_SYNC
+     } else if (event == RTW89_FRONT_VIF_DISABLED) {
+ #if defined(OWLY_NATIVE_PEER_DATA) && OWLY_NATIVE_PEER_DATA
+-        rc = rtw89_glue_awdl_vif_disable();
++        if (!sleeping)
++            rc = rtw89_glue_awdl_vif_disable();
+ #else
+-        rc = rtw89_glue_awdl_sync_enable(false);
++        if (!sleeping)
++            rc = rtw89_glue_awdl_sync_enable(false);
+ #endif
+ #endif
+     } else if (event == RTW89_FRONT_VIF_DESTROYED) {

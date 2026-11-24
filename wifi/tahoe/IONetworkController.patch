@@ -1,0 +1,15 @@
+--- IONetworkController.h
++++ IONetworkController.h
+@@ -1683,8 +1683,10 @@
+     OSMetaClassDeclareReservedUnused( IONetworkController,  4);
+     OSMetaClassDeclareReservedUnused( IONetworkController,  5);
+ #endif  /* !__PRIVATE_SPI__ */
+-    OSMetaClassDeclareReservedUnused( IONetworkController,  6);
+-    OSMetaClassDeclareReservedUnused( IONetworkController,  7);
++    // Tahoe uses these two slots. Preserve the SDK's opaque declarations
++    // and bind inherited entries to the actual kernel symbols.
++    virtual void _RESERVEDIONetworkController6() __asm__("__ZN19IONetworkController20allocatePacketNoWaitEj");
++    virtual void _RESERVEDIONetworkController7() __asm__("__ZN19IONetworkController18setHardwareAssistsEjj");
+     OSMetaClassDeclareReservedUnused( IONetworkController,  8);
+     OSMetaClassDeclareReservedUnused( IONetworkController,  9);
+     OSMetaClassDeclareReservedUnused( IONetworkController, 10);
