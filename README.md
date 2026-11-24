@@ -26,9 +26,9 @@ OpenCore 1.0.8 and an iPhone 8 Plus. The table includes follow-up reports.
 | AirDrop | **Works** | File transfer confirmed with an iPhone 8 Plus. |
 | Continuity | **Works** | General Continuity use reported. |
 | Handoff | **Works** | Confirmed in follow-up testing. |
+| Universal Clipboard | **Works** | Confirmed on airportRTL. |
 | iPhone Personal Hotspot | **Fails** | Reported on the tested setup. |
 | iPhone Mirroring | **Fails** | Reported on the tested setup. |
-| Universal Clipboard | **Unconfirmed** | Worked on AirBridgeRTL. A separate airportRTL result is pending. |
 | Instant Hotspot | **Untested** | Automatic hotspot discovery has no separate result. |
 | Continuity Camera | **Untested** | iPhone webcam mode. |
 | AirPlay to Mac | **Untested** | Streaming to this Mac. |
