@@ -22,8 +22,8 @@ OpenCore 1.0.8 and an iPhone 8 Plus. The table includes follow-up reports.
 | --- | --- | --- |
 | Wi-Fi | **Works** | Joined a network on the hardware baseline. |
 | Bluetooth LE advertising | **Works** | Firmware handoff and advertising verified. |
-| AirPods | **Works** | Full functionality reported. |
-| AirDrop | **Works** | File transfer confirmed with an iPhone 8 Plus. |
+| AirPods | **Works** | Full functionality reported, with handoff to phone. |
+| AirDrop | **Works** | 2 way file transfer confirmed with an iPhone 8 Plus. |
 | Continuity | **Works** | General Continuity use reported. |
 | Handoff | **Works** | Confirmed in follow-up testing. |
 | Universal Clipboard | **Works** | Confirmed on airportRTL. |
