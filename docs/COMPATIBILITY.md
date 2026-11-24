@@ -61,6 +61,9 @@ when reporting another result.
 | AirDrop | Mac to iPhone and iPhone to Mac separately. Record whether discovery, acceptance or file delivery failed. |
 | Continuity | Name the feature and direction, for example Universal Clipboard from iPhone to Mac. |
 
-Repeat-boot and sleep/wake reliability remain open. Instant Hotspot,
-Apple Watch unlock, Sidecar, Continuity Camera and iPhone Mirroring
-have no result on the tested build.
+The tester also reported full AirPods functionality and a failure with
+iPhone Personal Hotspot on their setup.
+
+Repeat-boot and sleep/wake reliability remain open. Apple Watch unlock,
+Sidecar, Continuity Camera and iPhone Mirroring have no result on the tested
+build.

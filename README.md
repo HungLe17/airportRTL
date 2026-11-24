@@ -17,7 +17,9 @@ Each download extracts to one `.kext` bundle. [Release notes][release]
 | Status | Details |
 | --- | --- |
 | **Verified on hardware** | Wi-Fi, Bluetooth advertising, AirDrop and Continuity on RTL8852BE (`10ec:b852`) with Bluetooth `13d3:3571`. This test used airportRTL v0.1.1, Tahoe 26.7.1, OpenCore 1.0.8 and an iPhone 8 Plus. |
-| **Pending hardware validation** | v0.1.2 on the expanded Wi-Fi match list, repeat boots, and sleep/wake. Instant Hotspot, Apple Watch unlock, Sidecar, Continuity Camera and iPhone Mirroring are also untested. |
+| **AirPods** | Full functionality reported on the tested setup. |
+| **Known issue** | iPhone Personal Hotspot fails on the tested setup. |
+| **Pending hardware validation** | v0.1.2 on the expanded Wi-Fi match list, repeat boots, and sleep/wake. Apple Watch unlock, Sidecar, Continuity Camera and iPhone Mirroring are also untested. |
 | **Unsupported** | USB Wi-Fi adapters, Apple silicon, and macOS builds outside the specified kernel target. Bluetooth controllers need their own supported USB ID and firmware profile. |
 
 ## Compatibility
