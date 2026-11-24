@@ -1,11 +1,14 @@
 """Both reference plists use the same personality key. Keep both PCI drivers."""
 import plistlib
 from pathlib import Path
+import re
 import sys
 import tempfile
 import unittest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "wifi"))
+ROOT = Path(__file__).resolve().parents[1]
+REFERENCE = ROOT / "third_party/AirPort_RTW89"
+sys.path.insert(0, str(ROOT / "wifi"))
 from check_layout import PCI_DEVICES, merged_info
 
 
@@ -14,7 +17,7 @@ class LayoutTest(unittest.TestCase):
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         self.root = Path(directory.name)
-        self.matches = " ".join(f"0x{n:04x}10ec" for n in (*PCI_DEVICES, 0x8922))
+        self.matches = " ".join(f"0x{n:04x}10ec" for n in PCI_DEVICES)
         self.write("kext", "AirPort_RTW89", "1.5.0", self.matches)
         self.write("front", "AirPortRTW89Front", "3.4", self.matches)
 
@@ -25,19 +28,33 @@ class LayoutTest(unittest.TestCase):
         path.write_bytes(plistlib.dumps(dict(IOKitPersonalities={"RTW89": props},
                                              OSBundleLibraries={"network": version})))
 
-    def test_both_roles_match_the_six_ids(self):
-        info = merged_info(self.root, "test.wifi", "0.1.0")
+    def test_both_roles_include_every_registered_rtw89_pci_device(self):
+        radio_glue = (REFERENCE / "src/compat_rtw89/rtw89_glue.c").read_text()
+        driver_list = radio_glue.split("#define GLUE_PCI_DRIVERS(x)", 1)[1].split("#define", 1)[0]
+        registered_ids = set()
+        for driver in re.findall(r"x\(rtw89_(\w+)_driver\)", driver_list):
+            source = (REFERENCE / "third_party/rtw89" / f"rtw{driver}.c").read_text()
+            ids = re.findall(r"PCI_DEVICE\(PCI_VENDOR_ID_REALTEK,\s*(0x[0-9a-fA-F]+)\)", source)
+            self.assertTrue(ids, driver)
+            registered_ids.update(f"0x{int(device, 16):04x}10ec" for device in ids)
+
+        info = merged_info(REFERENCE / "src", "test.wifi", "0.1.0")
         roles = info["IOKitPersonalities"]
         self.assertEqual(set(roles), {"AirPort_RTW89", "AirPortRTW89Front"})
+        self.assertEqual(len(registered_ids), 12)
         for name, props in roles.items():
             self.assertEqual(props["IOMatchCategory"], name)
             self.assertEqual(props["CFBundleIdentifier"], "test.wifi")
-            self.assertEqual(len(props["IOPCIMatch"].split()), 6)
-            self.assertNotIn("8922", props["IOPCIMatch"])
-        self.assertEqual(info["OSBundleLibraries"]["network"], "3.4")
+            self.assertCountEqual(props["IOPCIMatch"].split(), registered_ids)
+            self.assertNotIn("0xc82210ec", props["IOPCIMatch"].split())
 
     def test_unmatched_card_is_not_added(self):
         self.write("front", "AirPortRTW89Front", "3.4", "0xb85210ec")
+        with self.assertRaises(ValueError):
+            merged_info(self.root, "test.wifi", "0.1.0")
+
+    def test_unregistered_extra_match_is_rejected(self):
+        self.write("front", "AirPortRTW89Front", "3.4", self.matches + " 0xc82210ec")
         with self.assertRaises(ValueError):
             merged_info(self.root, "test.wifi", "0.1.0")
 
@@ -49,6 +66,7 @@ class LayoutTest(unittest.TestCase):
         info = merged_info(self.root, "test.wifi", "0.1.1", bridge)
         self.assertEqual(info["OSBundleRequired"], "Root")
         self.assertEqual(info["OSBundleLibraries"]["as.vit9696.Lilu"], "1.7.3")
+        self.assertEqual(info["OSBundleLibraries"]["network"], "3.4")
         self.assertEqual(info["IOKitPersonalities"]["OwlyAirLinkBridge"],
                          dict(role, CFBundleIdentifier="test.wifi"))
 

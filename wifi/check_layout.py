@@ -1,4 +1,4 @@
-"""Check the proposed two-personality Wi-Fi layout against the target libraries."""
+"""Build the integrated Wi-Fi personality layout and check its imports."""
 import argparse
 from pathlib import Path
 import plistlib
@@ -8,20 +8,28 @@ import sys
 import tempfile
 
 
-# PCI vendor 10EC. Firmware is selected by the radio driver after PCI match.
-PCI_DEVICES = (0xB852, 0xB85B, 0xC852, 0xB520, 0x8852, 0xA85A)
+# PCI IDs from the rtw89 front ends registered by the macOS radio glue.
+PCI_DEVICES = (
+    0xB851,                  # RTL8851BE
+    0x8852, 0xA85A,          # RTL8852AE
+    0xB852, 0xB85B,          # RTL8852BE
+    0xB520,                  # RTL8852BTE
+    0xC852,                  # RTL8852CE
+    0x8922, 0x892B,          # RTL8922AE
+    0x892D, 0x882D, 0x895D,  # RTL8922DE
+)
 
 
 def merged_info(reference, identifier, version, bridge=None):
     radio, front = [plistlib.loads((reference / name / "Info.plist").read_bytes())
                     for name in ("kext", "front")]
-    devices = [f"0x{device:04x}10ec" for device in PCI_DEVICES]
+    devices = sorted(f"0x{device:04x}10ec" for device in PCI_DEVICES)
     personalities = {}
     for source, service in ((radio, "AirPort_RTW89"), (front, "AirPortRTW89Front")):
         personality, = source["IOKitPersonalities"].values()
         if (personality["IOClass"] != service or personality["IOMatchCategory"] != service
                 or personality["IOProviderClass"] != "IOPCIDevice"
-                or not set(devices).issubset(personality["IOPCIMatch"].lower().split())):
+                or sorted(personality["IOPCIMatch"].lower().split()) != devices):
             raise ValueError(f"unexpected PCI matching contract for {service}")
         personalities[service] = dict(personality, CFBundleIdentifier=identifier,
                                       IOPCIMatch=" ".join(devices))
