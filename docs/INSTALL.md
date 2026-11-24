@@ -68,8 +68,8 @@ an editor that automatically adds all bundles back during a snapshot.
 
 ## 3. Set the legacy Skywalk block and boot arguments
 
-Under **Kernel → Block**, keep or add one enabled entry with the following
-values. The block applies to the built-in Skywalk. The replacement in
+Under **Kernel → Block**, keep or add the required Skywalk entry below.
+The block applies to the built-in Skywalk. The replacement in
 `Kernel → Add` supplies Skywalk for Legacy IO80211.
 
 | Field | Tested value |
@@ -80,6 +80,13 @@ values. The block applies to the built-in Skywalk. The replacement in
 | `Enabled` | `True` |
 | `MinKernel` | `23.0.0` |
 | `MaxKernel` | empty |
+
+On Tahoe systems with an RTL8125 boot conflict involving `AppleEthernetRL`,
+the working test EFI also uses an optional `Exclude` entry for
+`com.apple.driver.AppleEthernetRL`. Set `Arch` to `x86_64`, `Enabled` to
+`True` and `MinKernel` to `25.0.0`, and leave `MaxKernel` empty. On the
+tested system, boot recovered and wired Ethernet continued through a
+Lucy driver.
 
 For a shared EFI that boots other macOS versions, scope the Skywalk block
 and the two replacement family entries to the same applicable macOS
