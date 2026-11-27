@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>airportRTL | Realtek RTL8852BE Wi-Fi and AirDrop on macOS Tahoe</title>
+<meta name="description" content="airportRTL brings Realtek rtw89 PCIe Wi-Fi, Bluetooth and two-way AirDrop to x86_64 macOS Tahoe on OpenCore. Check RTL8852BE compatibility and download the kexts.">
+<link rel="canonical" href="https://hungle17.github.io/airportRTL/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="airportRTL | Realtek RTL8852BE Wi-Fi and AirDrop on macOS Tahoe">
+<meta property="og:description" content="Check hardware compatibility, download the Wi-Fi and Bluetooth kexts, and report your OpenCore test results.">
+<meta property="og:url" content="https://hungle17.github.io/airportRTL/">
+<style>
+:root{color-scheme:light dark;font-family:system-ui,sans-serif;line-height:1.6;--ink:#10231e;--bg:#f7faf8;--link:#14634d;--line:#a4bcb1}
+@media(prefers-color-scheme:dark){:root{--ink:#ebf5ef;--bg:#10221b;--link:#8fe3bc;--line:#627c70}}
+body{background:var(--bg);color:var(--ink);margin:0}main{max-width:46rem;margin:auto;padding:clamp(1.25rem,5vw,4rem)}
+header{border-bottom:1px solid var(--line);padding-bottom:1.5rem}section{padding-top:.65rem}h1{font-size:clamp(2rem,5vw,3.35rem);line-height:1.12;letter-spacing:-.035em}
+h2{line-height:1.25}a{color:var(--link);text-underline-offset:.2em}.links{display:flex;flex-wrap:wrap;gap:.75rem 1.5rem}code{overflow-wrap:anywhere}
+</style>
+</head>
+<body><main>
+<header>
+<p><strong>airportRTL · OpenCore kernel extensions</strong></p>
+<h1>Realtek RTL8852BE Wi‑Fi and AirDrop on macOS Tahoe</h1>
+<p>airportRTL pairs a Realtek rtw89 PCIe Wi‑Fi driver with a USB Bluetooth kext for Intel-compatible x86_64 Hackintosh systems running macOS Tahoe 26.7.1.</p>
+<nav class="links" aria-label="Project links">
+<a href="https://github.com/HungLe17/airportRTL/releases/latest">Download the latest release</a>
+<a href="https://github.com/HungLe17/airportRTL#install-with-opencore">OpenCore installation</a>
+<a href="https://github.com/HungLe17/airportRTL">Source code</a>
+</nav>
+</header>
+<section>
+<h2>What was tested?</h2>
+<p>The published baseline is RTL8852BE (PCI <code>10ec:b852</code>, USB Bluetooth <code>13d3:3571</code>) with OpenCore 1.0.8 and macOS Tahoe 26.7.1. Two-way AirDrop with an iPhone 8 Plus was demonstrated on v0.1.1. The project also reports working Wi‑Fi, Bluetooth LE, AirPods, Handoff and Universal Clipboard on the baseline.</p>
+<p>Personal Hotspot and iPhone Mirroring failed on the recorded setup. Sleep/wake is untested. Older macOS versions and USB Wi‑Fi adapters are not supported by the current release. A separate <a href="https://github.com/HungLe17/airportRTL/issues/1">Bluetooth failure report</a> concerns a different USB ID on Tahoe 26.7.3 with a manually modified kext.</p>
+</section>
+<section>
+<h2>Which other Realtek cards can I test?</h2>
+<p>v0.1.2 adds or includes PCIe matches for RTL8851BE, RTL8852AE, RTL8852BE, RTL8852BTE, RTL8852CE, RTL8922AE and RTL8922DE. Matching a PCI ID does not establish that Wi‑Fi, Bluetooth or AirDrop works on that card.</p>
+<p>Back up your working EFI and use a spare boot drive. Check the <a href="https://github.com/HungLe17/airportRTL/blob/main/docs/COMPATIBILITY.md">full compatibility notes</a> before installing. Share your hardware IDs, versions and successful or failed tests in a <a href="https://github.com/HungLe17/airportRTL/issues/new?template=hardware-test.yml">compatibility report</a>.</p>
+</section>
+<section>
+<h2>Upstream projects</h2>
+<p>See the <a href="https://github.com/HungLe17/airportRTL#credits">project credits</a> for AirPort_RTW89, RTLAirLink, Owly, BroadTek and the other upstream work that makes this possible.</p>
+</section>
+</main></body></html>
