@@ -11,7 +11,7 @@ Back up your complete working EFI. Make a test copy on a spare boot drive
 and confirm OpenCore can boot from it. Edit that copy first so you can
 return to the original EFI from the firmware boot menu.
 
-Download and extract the two `.kext.tar.gz` assets for the same version
+Download and extract the two `.kext.zip` assets for the same version
 from [Releases](https://github.com/HungLe17/airportRTL/releases). If you
 are building from source, follow the [build guide](BUILD.md). Copy the
 extracted bundles to `EFI/OC/Kexts`.
@@ -98,6 +98,16 @@ working configuration also retained the reference EFI's
 `-broadtekp2poff`. The integrated AWDL path starts without a separate
 enable flag. When migrating from AirBridgeRTL, clear the old experimental
 `rtw89_awdl=1` and `rtw89_ble_extadv=1` settings.
+
+The working Tahoe EFI used these Bluetooth values as **Data** under
+`NVRAM → Add → 7C436110-AB2A-4BBB-A880-FE41995C9F82`.
+
+| Key | Value |
+| --- | --- |
+| `bluetoothExternalDongleFailed` | `00` |
+| `bluetoothInternalControllerInfo` | `0000000000000000000000000000` (14 bytes) |
+
+[BlueToolFixup configuration](https://github.com/acidanthera/BrcmPatchRAM#bluetoolfixupkext)
 
 ### Boot policy on the tested EFI
 

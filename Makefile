@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := package
 .DELETE_ON_ERROR:
 
-AIRPORTRTL_VERSION := 0.1.2
+AIRPORTRTL_VERSION := 0.1.3
 BUILD_DIR ?= build/airportRTL
 WIFI_BUILD_DIR := $(abspath $(BUILD_DIR))/wifi-link
 MKSDK := ./third_party/MacKernelSDK

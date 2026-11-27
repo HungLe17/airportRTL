@@ -3,7 +3,6 @@ import argparse
 from pathlib import Path
 import plistlib
 import subprocess
-import tarfile
 import tempfile
 
 
@@ -47,12 +46,11 @@ def main(root, version):
         archives = []
         for bundle in bundles:
             verify(bundle, version)
-            packed = Path(stage) / f"{bundle.stem}-{version}.kext.tar.gz"
-            with tarfile.open(packed, "w:gz") as output:
-                output.add(bundle, arcname=bundle.name)
+            packed = Path(stage) / f"{bundle.stem}-{version}.kext.zip"
+            subprocess.run(["ditto", "-c", "-k", "--norsrc", "--keepParent", bundle, packed], check=True)
             extracted = Path(stage) / bundle.stem
             extracted.mkdir()
-            subprocess.run(["tar", "-xzf", packed, "-C", extracted], check=True)
+            subprocess.run(["ditto", "-x", "-k", packed, extracted], check=True)
             if {path.name for path in extracted.iterdir()} != {bundle.name}:
                 raise ValueError(f"Unexpected archive layout in {packed}")
             verify(extracted / bundle.name, version)

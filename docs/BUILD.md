@@ -1,6 +1,6 @@
 # Building and validating airportRTL
 
-The release build produces one versioned `.tar.gz` per signed project
+The release build produces one versioned ZIP per signed project
 kext. Use the [installation guide](INSTALL.md) to boot the extracted
 bundles with the external dependencies.
 
@@ -36,7 +36,7 @@ make package \
 ```
 
 The default output directory is `build/airportRTL/`. Each asset is named
-`<bundle>-<version>.kext.tar.gz` and extracts to the original `.kext`
+`<bundle>-<version>.kext.zip` and extracts to the original `.kext`
 bundle name. The build validates firmware inputs, checks kernel imports
 and verifies the ad-hoc signatures after extracting each archive.
 

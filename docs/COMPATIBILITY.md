@@ -37,11 +37,12 @@ The loader matches the USB device and reads its HCI identity before
 choosing firmware. The current firmware profile is RTL8852BU. Enable the
 card's Bluetooth port in your USB map and mark it internal.
 
-| USB ID | Status in 0.1.1 |
+| USB ID | Status |
 | --- | --- |
 | `13d3:3571` | Hardware-tested. Firmware handoff completed, 16 extended advertising sets were reported, and the controller acknowledged advertising commands. |
 | `13d3:3570` | USB match present. Firmware and advertising depend on the controller reporting the supported HCI identity. Hardware validation is pending. |
 | `0bda:b85b` | USB match present. Firmware and advertising depend on the controller reporting the supported HCI identity. Hardware validation is pending. |
+| `0bda:b85c` | USB match added in 0.1.3. RTL8852BU firmware handoff was reported on Tahoe 26.7.3. macOS controller initialization and pairing still require validation. |
 
 With the card connected, look up the Bluetooth vendor and product IDs in
 System Information → USB. Obtain the wireless controller's PCI IDs from

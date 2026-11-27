@@ -3,7 +3,7 @@
 <p align="center"><strong>Realtek 8XXX (RTL8852BE) Wi-Fi, Bluetooth and AirDrop for macOS Tahoe</strong></p>
 
 <p align="center">
-  <a href="https://github.com/HungLe17/airportRTL/releases/tag/v0.1.2"><strong>Download v0.1.2</strong></a>
+  <a href="https://github.com/HungLe17/airportRTL/releases/tag/v0.1.3"><strong>Download v0.1.3</strong></a>
   &nbsp;·&nbsp;
   <a href="#compatibility">Compatibility</a>
   &nbsp;·&nbsp;
@@ -26,12 +26,12 @@ still need testers; a matching device ID is not proof of support.
 If you test another card, [open a compatibility report](https://github.com/HungLe17/airportRTL/issues/new?template=hardware-test.yml)
 with the device IDs, macOS build, OpenCore version, and what worked.
 
-| v0.1.2 download | What it provides |
+| v0.1.3 download | What it provides |
 | --- | --- |
 | [airportRTLWiFi.kext][wifi-download] | Station Wi-Fi and the AirLink AWDL adapter |
 | [airportRTLBluetooth.kext][bluetooth-download] | Realtek USB firmware loading and BLE advertising |
 
-Each download extracts to one `.kext` bundle. [Release notes][release]
+Each ZIP extracts to one `.kext` bundle. [Release notes][release]
 
 ## What works and known limits
 
@@ -67,7 +67,7 @@ Continuity features also have their own device and OS requirements.
 
 ### Does airportRTL support macOS Sequoia or earlier?
 
-The current release, **v0.1.2**, targets **x86_64 macOS Tahoe 26.7.1**
+The current release, **v0.1.3**, targets **x86_64 macOS Tahoe 26.7.1**
 (build `25G241`, Darwin `25.6.0`). The OpenCore setup pins both airportRTL
 kexts to Darwin `25.6.0`, and the Bluetooth firmware loader requires Darwin
 25. **macOS Sequoia 15, Sonoma 14, Ventura 13 and older releases are
@@ -75,7 +75,7 @@ unsupported.**
 
 ### Realtek Wi-Fi and USB Bluetooth devices
 
-Version 0.1.2 matches all 12 PCIe device IDs in the bundled rtw89 driver.
+airportRTL matches all 12 PCIe device IDs in the bundled rtw89 driver.
 All Wi-Fi IDs use vendor `10ec`.
 
 | PCIe Wi-Fi model | Device IDs |
@@ -90,7 +90,9 @@ All Wi-Fi IDs use vendor `10ec`.
 
 The Bluetooth loader targets RTL8852BU firmware. It matches USB IDs
 `13d3:3571`, `13d3:3570` and `0bda:b85b` and checks the controller's HCI
-identity before loading firmware. [Device and feature details](docs/COMPATIBILITY.md)
+identity before loading firmware. Version 0.1.3 adds USB matching for
+`0bda:b85c`. Pairing on that variant still needs hardware validation.
+[Device and feature details](docs/COMPATIBILITY.md)
 
 ## Install with OpenCore
 
@@ -170,7 +172,7 @@ make package \
   LILU_KEXT=/path/to/Lilu.kext
 ```
 
-The build writes one versioned `.kext.tar.gz` per kext to `build/airportRTL/`.
+The build writes one versioned `.kext.zip` per kext to `build/airportRTL/`.
 
 ## Credits
 
@@ -191,9 +193,9 @@ The build writes one versioned `.kext.tar.gz` per kext to `build/airportRTL/`.
 
 Source notices and firmware licenses ship with their corresponding components.
 
-[release]: https://github.com/HungLe17/airportRTL/releases/tag/v0.1.2
-[wifi-download]: https://github.com/HungLe17/airportRTL/releases/download/v0.1.2/airportRTLWiFi-0.1.2.kext.tar.gz
-[bluetooth-download]: https://github.com/HungLe17/airportRTL/releases/download/v0.1.2/airportRTLBluetooth-0.1.2.kext.tar.gz
+[release]: https://github.com/HungLe17/airportRTL/releases/tag/v0.1.3
+[wifi-download]: https://github.com/HungLe17/airportRTL/releases/download/v0.1.3/airportRTLWiFi-0.1.3.kext.zip
+[bluetooth-download]: https://github.com/HungLe17/airportRTL/releases/download/v0.1.3/airportRTLBluetooth-0.1.3.kext.zip
 [lilu]: https://github.com/acidanthera/Lilu/releases
 [skywalk]: https://raw.githubusercontent.com/dortania/OpenCore-Legacy-Patcher/d9604c36a432eaf243ea18659ff4d208187452d7/payloads/Kexts/Wifi/IOSkywalkFamily-v1.2.0.zip
 [legacy-io80211]: https://raw.githubusercontent.com/dortania/OpenCore-Legacy-Patcher/d9604c36a432eaf243ea18659ff4d208187452d7/payloads/Kexts/Wifi/IO80211FamilyLegacy-v1.0.0.zip
