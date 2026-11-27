@@ -1,0 +1,37 @@
+name: Hardware compatibility report
+description: Report a successful or failed airportRTL test on a specific setup.
+title: "[Hardware] "
+body:
+  - type: markdown
+    attributes:
+      value: Test from a spare EFI while keeping your working EFI available. Do not attach a full EFI or paste serial numbers, SSIDs, MAC addresses, or account details.
+  - type: input
+    id: pci-id
+    attributes:
+      label: Realtek Wi-Fi model and PCI ID
+      placeholder: "RTL8852BE, 10ec:b852"
+    validations:
+      required: true
+  - type: input
+    id: bt-id
+    attributes:
+      label: Bluetooth USB vendor and product ID
+      placeholder: "13d3:3571, or not tested"
+  - type: input
+    id: versions
+    attributes:
+      label: airportRTL version, macOS version and build, OpenCore version
+      placeholder: "v0.1.2, Tahoe 26.7.1 (25G241), OpenCore 1.0.8"
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: What worked, failed, or was not tested?
+      description: Report boot, Wi-Fi, Bluetooth, both AirDrop directions separately, Handoff, Universal Clipboard, and sleep/wake where applicable. Include iPhone model and iOS version for AirDrop results.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Reproduction details or redacted logs (optional)

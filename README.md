@@ -1,6 +1,6 @@
 <h1 align="center">airportRTL</h1>
 
-<p align="center"><strong>Realtek Wi-Fi and Bluetooth for macOS Tahoe</strong></p>
+<p align="center"><strong>Realtek RTL8852BE Wi-Fi, Bluetooth and AirDrop for macOS Tahoe</strong></p>
 
 <p align="center">
   <a href="https://github.com/HungLe17/airportRTL/releases/tag/v0.1.2"><strong>Download v0.1.2</strong></a>
@@ -16,6 +16,15 @@ airportRTL provides OpenCore kernel extensions for Realtek rtw89 PCIe
 Wi-Fi and USB Bluetooth on x86_64 Hackintosh systems. The driver matches
 RTL8851, RTL8852 and RTL8922 PCIe devices. It uses Apple Wireless Direct
 Link (AWDL) and Bluetooth LE discovery for AirDrop and Continuity.
+
+**Start here:** The verified hardware baseline is **RTL8852BE**
+(PCI `10ec:b852`, Bluetooth USB `13d3:3571`) on **x86_64 macOS
+Tahoe 26.7.1** with OpenCore. Two-way AirDrop was demonstrated with
+an iPhone 8 Plus on v0.1.1. The wider rtw89 PCIe matches in v0.1.2
+still need testers; a matching device ID is not proof of support.
+
+If you test another card, [open a compatibility report](https://github.com/HungLe17/airportRTL/issues/new?template=hardware-test.yml)
+with the device IDs, macOS build, OpenCore version, and what worked.
 
 | v0.1.2 download | What it provides |
 | --- | --- |
