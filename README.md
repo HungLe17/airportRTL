@@ -1,6 +1,6 @@
 <h1 align="center">airportRTL</h1>
 
-<p align="center"><strong>Realtek RTL8852BE Wi-Fi, Bluetooth and AirDrop for macOS Tahoe</strong></p>
+<p align="center"><strong>Realtek 8XXX (RTL8852BE) Wi-Fi, Bluetooth and AirDrop for macOS Tahoe</strong></p>
 
 <p align="center">
   <a href="https://github.com/HungLe17/airportRTL/releases/tag/v0.1.2"><strong>Download v0.1.2</strong></a>
